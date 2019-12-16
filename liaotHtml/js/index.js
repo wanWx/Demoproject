@@ -3,6 +3,100 @@ $(function() {
 
     //显示隐藏发送按钮
     var _editAreaInterval;
+
+    var callback = {
+        Push: function (result) {
+            var html = '<div class="message">' +
+            '<div class="nictime">' +
+                '<span class="time">'+ result.timestamp + '</span>' +
+                '</div>' +
+                '<div class="nickname">' + result.channel + '</div>' +
+                '<img class="avatar" src="images/wwx.jpg" />' +
+                '<div class="content">' +
+                    '<div class="bubble bubble_default left">' +
+                        '<div class="bubble_cont">' +
+                            '<div class="plain">' +
+                                '<pre>'+ result.message +'</pre>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            $('#messageList').append(html)
+            console.log(result)
+        },
+
+        Receive: function () {
+
+        },
+
+        Send: function () {}
+    }
+
+
+
+    var socket = {
+        wx: null,
+        url: 'wss://dev.flm158.com/platform/',
+        fixedchannel: 'flm',
+        
+        connect: function () {
+            var support = "MozWebSocket" in window ? 'MozWebSocket' : ("WebSocket" in window ? 'WebSocket' : null);
+
+            if (support == null) {
+
+                this.log("Your browser cannot support WebSocket！");
+
+                return;
+            }
+            this.ws = new window[support](this.url);
+
+            this.ws.onopen = function (event) {
+                socket.subscribe('flm');
+            };
+            this.ws.onmessage = function (event) {
+
+                var message = JSON.parse(event.data);
+
+                callback[message.command](message);
+            };
+        },
+        
+        subscribe: function (channel) {
+            if (!channel) {
+                return
+            }
+            if (this.ws) {
+                var parameter = JSON.stringify({
+
+                    command: 'Receive',
+                    action: 'Add',
+                    channel: channel
+                });
+                this.ws.send(parameter);   
+            }
+        }, 
+
+        push: function (message) {
+            if (!message) {
+                return
+            }
+
+            if (this.ws) {
+                var parameter = JSON.stringify({
+
+                    command: 'Send',
+                    action: null,
+                    channel: 'flm',
+                    message: message
+                });
+
+                this.ws.send(parameter); 
+            }
+        }
+        
+    }
+
     $('#editArea').focus(function() {
         var _this = $(this),
             html;
@@ -90,6 +184,11 @@ $(function() {
         this.= 'none';
     }*/
 
+    // 发送消息
+    $('#btn_send').click(function() {
+        socket.push(_editArea.html())
+    })
+
 
     resetMessageArea();
 
@@ -99,4 +198,5 @@ $(function() {
     function resetMessageArea() {
         $('#messageList').animate({ 'scrollTop': 999 }, 500);
     }
+    socket.connect();
 });

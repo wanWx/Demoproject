@@ -323,9 +323,9 @@ a.btn {
 }
 
 .message .nictime .time {
-    width: 46px;
     height: 24px;
     line-height: 24px;
+    padding: 0 6px;
     color: #fff;
     border-radius: 4px;
     text-align: center;
